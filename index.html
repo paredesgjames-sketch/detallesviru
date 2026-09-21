@@ -166,7 +166,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=9;
+const BUILD=10;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -367,8 +367,8 @@ async function publish(){
   try{
     const api='https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+gh.path;
     const H={Authorization:'Bearer '+String(gh.token).replace(/[^\x21-\x7E]/g,''),Accept:'application/vnd.github+json'};
-    try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
-    let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:H});
+    try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch)+'&raw='+Date.now(),{cache:'no-store',headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
+    let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch)+'&j='+Date.now(),{cache:'no-store',headers:H});
     if(r.ok){sha=(await ghJson(r)).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
     const body={message:'Actualizar catálogo',content:b64(html),branch:gh.branch};if(sha)body.sha=sha;
     const w=await fetch(api,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify(body)});
@@ -546,7 +546,7 @@ async function testGh(){
   if(!tok){set('Primero pega el token en el campo de arriba');return}
   set('Probando…');
   try{
-    const r=await fetch('https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo),{headers:{Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'}});
+    const r=await fetch('https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'?t='+Date.now(),{cache:'no-store',headers:{Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'}});
     if(r.status===401){set('✗ El token no es válido o venció (401). Crea uno nuevo');return}
     if(r.status===404){set('✗ No encuentra el repositorio "'+gh.repo+'" o el token no tiene acceso a él (404)');return}
     if(!r.ok){set('✗ GitHub respondió con el código '+r.status);return}
