@@ -93,7 +93,7 @@ footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);text-al
 .tot{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 4px}
 .tot b{font:700 30px/1 var(--serif);color:var(--accent)}
 label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 4px;letter-spacing:.02em}
-input[type=text],input[type=date],input[type=time],input[type=tel],input[type=number],textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;outline:none;font-size:16px}
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=tel],input[type=number],textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;outline:none;font-size:16px}
 input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -250,7 +250,8 @@ function waText(){
   L.push('','¡Gracias!');
   return L.join('\n');
 }
-function waUrl(){return 'https://wa.me/'+String(state.whatsapp||'').replace(/\D/g,'')+'?text='+encodeURIComponent(waText())}
+function waNum(){let n=String(state.whatsapp||'').replace(/\D/g,'').replace(/^0+/,'');if(n.length===9&&n[0]==='9')n='51'+n;return n}
+function waUrl(){return 'https://wa.me/'+waNum()+'?text='+encodeURIComponent(waText())}
 function openCart(keep){
   const its=cartItems();view={kind:'cart',id:null};
   const today=new Date();const min=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
@@ -303,7 +304,8 @@ function openSettings(){
     <label>Usuario de GitHub</label><input type="text" data-g="user" value="${esc(gh.user)}" autocapitalize="off" autocorrect="off">
     <label>Repositorio</label><input type="text" data-g="repo" value="${esc(gh.repo)}" autocapitalize="off" autocorrect="off">
     <label>Token de acceso</label><input type="password" data-g="token" value="${esc(gh.token)}" autocomplete="off" placeholder="github_pat_…">
-    <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez: queda guardado en este navegador.</p>
+    <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez.</p>
+    <p class="hint" id="ghStatus" style="font-weight:600">${gh.token?'✓ Token guardado en este navegador':'Aún no hay token guardado'}</p>
     <div class="btns"><button class="btn primary" data-act="closeset">Listo</button></div>`);
   view={kind:'settings',id:null};
 }
@@ -514,7 +516,7 @@ document.addEventListener('click',e=>{
   else if(a==='wa'){
     if(!cartItems().length){e.preventDefault();return}
     if(!form.name.trim()){e.preventDefault();toast('Escribe tu nombre para continuar');const i=$('[data-f="name"]');if(i)i.focus();return}
-    if(!String(state.whatsapp||'').replace(/\D/g,'')){e.preventDefault();toast('El negocio aún no configuró su WhatsApp');return}
+    if(!waNum()){e.preventDefault();toast('El negocio aún no configuró su WhatsApp');return}
     el.href=waUrl();
   }
   else if(a==='admin'){if(!canAdmin)return;admin=true;renderApp();window.scrollTo({top:0})}
@@ -558,7 +560,11 @@ document.addEventListener('input',e=>{
   else if(t.dataset.s){state[t.dataset.s]=t.value;markDirty()}
   else if(t.dataset.sec!==undefined){const i=+t.dataset.sec,v=t.value.trim(),old=state.sections[i];if(v&&v!==old){state.products.forEach(p=>{if(p.cat===old)p.cat=v});state.sections[i]=v;markDirty()}}
   else if(t.dataset.b){bulk[t.dataset.b]=t.value}
-  else if(t.dataset.g){gh[t.dataset.g]=t.value.trim();try{localStorage.setItem('qd-gh',JSON.stringify(gh))}catch(e){}}
+  else if(t.dataset.g){
+    gh[t.dataset.g]=t.value.trim();
+    let ok=true;try{localStorage.setItem('qd-gh',JSON.stringify(gh));ok=!!localStorage.getItem('qd-gh')}catch(e){ok=false}
+    const st=$('#ghStatus');if(st)st.textContent=!gh.token?'Aún no hay token guardado':ok?'✓ Token guardado en este navegador':'⚠ Este navegador no permite guardar datos (¿ventana privada?)';
+  }
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
