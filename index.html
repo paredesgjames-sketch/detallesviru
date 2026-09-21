@@ -166,7 +166,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=7;
+const BUILD=8;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -331,6 +331,8 @@ function openSettings(){
     <label>Token de acceso</label><input type="password" data-g="token" value="${esc(gh.token)}" autocomplete="off" placeholder="github_pat_…">
     <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez.</p>
     <p class="hint" id="ghStatus" style="font-weight:600">${gh.token?'✓ Token guardado en este navegador':'Aún no hay token guardado'}</p>
+    <button class="btn ghost" data-act="ghtest" style="width:100%;margin-top:8px">Probar conexión con GitHub</button>
+    <p class="hint" id="ghTest" style="font-weight:600"></p>
     <div class="btns"><button class="btn primary" data-act="closeset">Listo</button></div>`);
   view={kind:'settings',id:null};
 }
@@ -364,7 +366,7 @@ async function publish(){
   const btn=document.querySelector('.pub');if(btn){btn.disabled=true;btn.textContent='Publicando…'}
   try{
     const api='https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+gh.path;
-    const H={Authorization:'Bearer '+gh.token,Accept:'application/vnd.github+json'};
+    const H={Authorization:'Bearer '+String(gh.token).replace(/[^\x21-\x7E]/g,''),Accept:'application/vnd.github+json'};
     try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
     let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:H});
     if(r.ok){sha=(await r.json()).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
@@ -376,7 +378,7 @@ async function publish(){
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='Publicar cambios'}
     const st=e&&e.status;
-    toast(st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo publicar. Revisa tu conexión');
+    toast(st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo conectar con GitHub'+(e&&e.message?' ('+e.message+')':'')+'. Usa "Probar conexión" en Ajustes');
   }
 }
 
@@ -537,6 +539,20 @@ function openSections(){
   view={kind:'secs',id:null};
 }
 
+async function testGh(){
+  const st=$('#ghTest');const set=t=>{if(st)st.textContent=t};
+  const tok=String(gh.token||'').replace(/[^\x21-\x7E]/g,'');
+  if(!tok){set('Primero pega el token en el campo de arriba');return}
+  set('Probando…');
+  try{
+    const r=await fetch('https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo),{headers:{Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'}});
+    if(r.status===401){set('✗ El token no es válido o venció (401). Crea uno nuevo');return}
+    if(r.status===404){set('✗ No encuentra el repositorio "'+gh.repo+'" o el token no tiene acceso a él (404)');return}
+    if(!r.ok){set('✗ GitHub respondió con el código '+r.status);return}
+    const j=await r.json();
+    set(j.permissions&&j.permissions.push?'✓ Todo bien: puedes publicar en '+j.full_name:'✗ El token solo puede leer. Cambia Contents a "Read and write"');
+  }catch(e){set('✗ No se pudo conectar con GitHub ('+(e&&e.message||e)+'). Tu red o tu navegador podrían estar bloqueando api.github.com')}
+}
 async function shareProduct(id){
   const p=byId(id);if(!p)return;
   const url=location.origin+location.pathname+'#p='+encodeURIComponent(id);
@@ -577,6 +593,7 @@ document.addEventListener('click',e=>{
   else if(a==='tpl'){bulkTemplate()}
   else if(a==='bulkprev'){bulkPreview()}
   else if(a==='bulkgo'){bulkGo()}
+  else if(a==='ghtest'){testGh()}
   else if(a==='clearq'){query='';const qi=$('#q');if(qi)qi.value='';renderMain()}
   else if(a==='share'){shareProduct(id)}
   else if(a==='dup'){const i=state.products.findIndex(p=>p.id===id);if(i>=0){const c=Object.assign({},state.products[i],{id:uid(),name:state.products[i].name+' (copia)'});state.products.splice(i+1,0,c);markDirty();renderApp();toast('Ramo duplicado. Toca Editar para cambiarlo')}}
