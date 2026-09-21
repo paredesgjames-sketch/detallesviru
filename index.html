@@ -212,7 +212,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=16;
+const BUILD=17;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -420,6 +420,7 @@ async function publish(){
     const H={Authorization:'Bearer '+String(gh.token).replace(/[^\x21-\x7E]/g,''),Accept:'application/vnd.github+json'};
     try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch)+'&raw='+Date.now(),{cache:'no-store',headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
     if(needImg){await ghPutFile('preview.jpg',state.shareImg.split(',')[1],'Imagen para compartir el enlace',H)}
+    try{await ghPutFile('compartir/index.html',b64(shareHtml()),'Página para compartir el enlace',H)}catch(e2){}
     let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch)+'&j='+Date.now(),{cache:'no-store',headers:H});
     if(r.ok){sha=(await ghJson(r)).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
     const body={message:'Actualizar catálogo',content:b64(html),branch:gh.branch};if(sha)body.sha=sha;
@@ -657,12 +658,24 @@ const ogBase=()=>location.origin+location.pathname.replace(/[^/]*$/,'');
 function injectOg(d){
   const head=d.querySelector('head');
   head.querySelectorAll('[data-og]').forEach(x=>x.remove());
-  const title=state.shareTitle||(state.brand+' | Catálogo'),desc=state.shareDesc||state.tagline||'',base=ogBase();
+  const title=(state.shareTitle||(state.brand+' | Catálogo')).trim(),desc=(state.shareDesc||state.tagline||'').trim(),base=ogBase();
   const M=[['property','og:type','website'],['property','og:site_name',state.brand],['property','og:title',title],['property','og:description',desc],['property','og:url',base]];
   if(state.shareImg){const u=base+'preview.jpg?v='+(state.shareV||1);M.push(['property','og:image',u],['property','og:image:width','1200'],['property','og:image:height','630'],['name','twitter:card','summary_large_image'],['name','twitter:image',u])}
   M.forEach(m=>{const e=document.createElement('meta');e.setAttribute(m[0],m[1]);e.setAttribute('content',m[2]);e.setAttribute('data-og','');head.appendChild(e)});
   const md=head.querySelector('meta[name="description"]');if(md&&desc)md.setAttribute('content',desc);
 }
+function shareHtml(){
+  const base=ogBase(),title=(state.shareTitle||(state.brand+' | Catálogo')).trim(),desc=(state.shareDesc||state.tagline||'').trim();
+  const u=state.shareImg?base+'preview.jpg?v='+(state.shareV||1):'';
+  const a=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  return '<!DOCTYPE html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n'
+   +'<title>'+a(title)+'</title>\n<meta name="description" content="'+a(desc)+'">\n'
+   +'<meta property="og:type" content="website">\n<meta property="og:site_name" content="'+a(state.brand)+'">\n<meta property="og:title" content="'+a(title)+'">\n<meta property="og:description" content="'+a(desc)+'">\n<meta property="og:url" content="'+a(base+'compartir/')+'">\n'
+   +(u?'<meta property="og:image" content="'+a(u)+'">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:image" content="'+a(u)+'">\n':'')
+   +'<meta http-equiv="refresh" content="0;url=../">\n<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#fbf6f2;color:#2a1a1f}a{color:#9b2447;font-weight:600}</style>\n'
+   +'<script>location.replace("../"+location.hash)<\/script>\n</head><body><p>Abriendo el catálogo… <a href="../">Toca aquí si no se abre</a></p></body></html>\n';
+}
+
 async function ghPutFile(path,b64,msg,H){
   const api='https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+path;
   let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch)+'&j='+Date.now(),{cache:'no-store',headers:H});
