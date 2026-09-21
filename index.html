@@ -166,7 +166,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=8;
+const BUILD=9;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -238,7 +238,7 @@ function card(p){
 function renderApp(){
   document.title=state.brand+' · Catálogo de ramos';
   $('#app').innerHTML=`
-  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button data-act="bulk">Carga masiva</button><button data-act="secs">Secciones</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
+  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button data-act="bulk">Carga masiva</button><button data-act="secs">Secciones</button><button data-act="dl">⬇ Archivo</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
   <header class="hdr"><div class="brand"><span class="logo">${ROSE_ICON}</span><div><div class="bn">${esc(state.brand)}</div><div class="bt">${esc(state.tagline)}</div></div>${canAdmin&&!admin?'<button class="hbtn" data-act="admin">⚙ Administrar</button>':''}</div></header>
   <section class="hero"><p class="eyebrow">Catálogo</p><h1>Ramos de rosas para cada ocasión</h1><p>Elige tu ramo favorito, arma tu pedido y envíalo por WhatsApp. Lo confirmamos contigo al instante.</p>${state.note?`<span class="note">${esc(state.note)}</span>`:''}</section>
   ${state.products.length>=3?`<div class="tools"><input type="search" id="q" placeholder="Buscar ramo…" value="${esc(query)}" autocomplete="off"><select id="sort"><option value="">Ordenar</option><option value="asc" ${sortBy==='asc'?'selected':''}>Precio: menor a mayor</option><option value="desc" ${sortBy==='desc'?'selected':''}>Precio: mayor a menor</option></select></div>`:''}
@@ -369,7 +369,7 @@ async function publish(){
     const H={Authorization:'Bearer '+String(gh.token).replace(/[^\x21-\x7E]/g,''),Accept:'application/vnd.github+json'};
     try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
     let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:H});
-    if(r.ok){sha=(await r.json()).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
+    if(r.ok){sha=(await ghJson(r)).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
     const body={message:'Actualizar catálogo',content:b64(html),branch:gh.branch};if(sha)body.sha=sha;
     const w=await fetch(api,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify(body)});
     if(!w.ok){const e=new Error('put');e.status=w.status;throw e}
@@ -378,7 +378,7 @@ async function publish(){
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='Publicar cambios'}
     const st=e&&e.status;
-    toast(st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo conectar con GitHub'+(e&&e.message?' ('+e.message+')':'')+'. Usa "Probar conexión" en Ajustes');
+    toast(st==='blocked'?'Tu red o navegador bloquea GitHub (responde una página web). Prueba con datos móviles u otro navegador, o toca ⬇ Archivo y súbelo a mano':st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo conectar con GitHub'+(e&&e.message?' ('+e.message+')':'')+'. Usa "Probar conexión" en Ajustes');
   }
 }
 
@@ -539,6 +539,7 @@ function openSections(){
   view={kind:'secs',id:null};
 }
 
+async function ghJson(r){const t=await r.text();try{return JSON.parse(t)}catch(e){const er=new Error('blocked');er.status='blocked';throw er}}
 async function testGh(){
   const st=$('#ghTest');const set=t=>{if(st)st.textContent=t};
   const tok=String(gh.token||'').replace(/[^\x21-\x7E]/g,'');
@@ -549,9 +550,9 @@ async function testGh(){
     if(r.status===401){set('✗ El token no es válido o venció (401). Crea uno nuevo');return}
     if(r.status===404){set('✗ No encuentra el repositorio "'+gh.repo+'" o el token no tiene acceso a él (404)');return}
     if(!r.ok){set('✗ GitHub respondió con el código '+r.status);return}
-    const j=await r.json();
+    const j=await ghJson(r);
     set(j.permissions&&j.permissions.push?'✓ Todo bien: puedes publicar en '+j.full_name:'✗ El token solo puede leer. Cambia Contents a "Read and write"');
-  }catch(e){set('✗ No se pudo conectar con GitHub ('+(e&&e.message||e)+'). Tu red o tu navegador podrían estar bloqueando api.github.com')}
+  }catch(e){if(e&&e.status==='blocked'){set('✗ Tu red o navegador responde con una página web en lugar de GitHub. Prueba con datos móviles u otro navegador, o usa el botón ⬇ Archivo');return}set('✗ No se pudo conectar con GitHub ('+(e&&e.message||e)+'). Tu red o tu navegador podrían estar bloqueando api.github.com')}
 }
 async function shareProduct(id){
   const p=byId(id);if(!p)return;
@@ -594,6 +595,7 @@ document.addEventListener('click',e=>{
   else if(a==='bulkprev'){bulkPreview()}
   else if(a==='bulkgo'){bulkGo()}
   else if(a==='ghtest'){testGh()}
+  else if(a==='dl'){downloadHtml(buildHtml());toast('Descargado. En GitHub: Add file → Upload files, y sube este index.html')}
   else if(a==='clearq'){query='';const qi=$('#q');if(qi)qi.value='';renderMain()}
   else if(a==='share'){shareProduct(id)}
   else if(a==='dup'){const i=state.products.findIndex(p=>p.id===id);if(i>=0){const c=Object.assign({},state.products[i],{id:uid(),name:state.products[i].name+' (copia)'});state.products.splice(i+1,0,c);markDirty();renderApp();toast('Ramo duplicado. Toca Editar para cambiarlo')}}
