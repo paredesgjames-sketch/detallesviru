@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Q'Detalles Virú · Catálogo de ramos</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap">
 <style>
 :root{
   --bg:#fbf6f2;--surface:#ffffff;--ink:#2a1a1f;--muted:#7a6a6e;--accent:#9b2447;--accent-ink:#ffffff;
@@ -125,10 +124,10 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 #toast.show{opacity:1}
 </style>
 </head>
-<body>
+<body style="">
 <div id="app"></div>
 <div id="overlay-root"></div>
-<script id="catalog-data" type="application/json">{"brand":"Q'Detalles Virú","tagline":"Ramos de rosas y detalles hechos con amor","whatsapp":"","note":"Pedidos con 24 horas de anticipación","products":[{"id":"demo1","name":"Ramo Romance","price":89,"desc":"12 rosas rojas seleccionadas con follaje fino, envueltas en papel premium y lazo de satén.","img":"","tone":0,"avail":true},{"id":"demo2","name":"Ramo Atardecer","price":129,"desc":"24 rosas en tonos coral y durazno, con eucalipto y papel kraft. Ideal para aniversarios.","img":"","tone":1,"avail":true},{"id":"demo3","name":"Ramo Ternura","price":179,"desc":"36 rosas lila y rosadas con gypsophila. Un detalle que impresiona desde el primer vistazo.","img":"","tone":2,"avail":true}]}</script>
+<script id="catalog-data" type="application/json">{"brand":"Q'Detalles Virú","tagline":"Ramos de rosas y detalles hechos con amor","whatsapp":"","note":"Pedidos con 24 horas de anticipación","products":[]}</script>
 <script>
 (function(){
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
@@ -393,5 +392,6 @@ if(location.hash==='#admin'){
 }
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
