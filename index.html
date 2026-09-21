@@ -126,6 +126,15 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 .chips:empty{display:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;white-space:nowrap}
 .chips button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:8px 0 6px}
+.tile{position:relative;width:calc((100% - 12px)/2);aspect-ratio:1/1;border:0;padding:0;border-radius:18px;overflow:hidden;background:var(--soft);box-shadow:var(--shadow);text-align:left}
+@media(min-width:720px){.tile{width:calc((100% - 24px)/3);aspect-ratio:4/3}}
+@media(min-width:1000px){.tile{width:calc((100% - 36px)/4)}}
+.tph{position:absolute;inset:0}.tph img,.tph svg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.tile:hover .tph img,.tile:hover .tph svg{transform:scale(1.05)}
+.tt{position:absolute;left:0;right:0;bottom:0;padding:34px 12px 12px;background:linear-gradient(transparent,rgba(20,8,12,.86));color:#fff;display:flex;flex-direction:column;gap:2px}
+.tt b{font:700 21px/1.1 var(--serif)}.tt small{font-size:12px;opacity:.88}
+.back{border:0;background:none;color:var(--accent);font-weight:600;font-size:14px;padding:8px 0;margin:2px 0 6px;display:block}
 .sect{margin-top:26px}.sect:first-child{margin-top:10px}
 .sh{margin:0 0 14px;font:700 clamp(24px,5vw,32px)/1.1 var(--serif);text-align:center}
 .sh small{font:500 13px var(--sans);color:var(--muted);margin-left:8px}
@@ -472,7 +481,11 @@ function mainHtml(){
   let show=curSec?g.filter(x=>x.name===curSec):g;
   if(!show.length){curSec='';show=g}
   if(!admin)show=show.filter(x=>x.items.length);
-  return show.map(x=>'<section class="sect">'+(x.name?'<h2 class="sh">'+esc(x.name)+'<small>'+x.items.length+'</small></h2>':'')+(x.items.length?'<div class="grid">'+x.items.map(card).join('')+'</div>':'<p class="hint" style="text-align:center">Sin ramos todavía en esta sección.</p>')+'</section>').join('');
+  const named=g.filter(x=>x.name&&(x.items.length||admin));
+  let pre='';
+  if(!curSec&&named.length>=2)pre='<p class="eyebrow" style="text-align:center;margin:6px 0 0">Elige una categoría</p><div class="tiles">'+named.map(x=>{const cov=x.items.find(p=>p.img)||x.items[0];return '<button class="tile" data-act="sec" data-v="'+esc(x.name)+'"><span class="tph">'+(cov?imgOf(cov):roseArt(0))+'</span><span class="tt"><b>'+esc(x.name)+'</b><small>'+x.items.length+(x.items.length===1?' ramo':' ramos')+'</small></span></button>'}).join('')+'</div>';
+  if(curSec)pre='<button class="back" data-act="sec" data-v="">← Ver todas las categorías</button>';
+  return pre+show.map(x=>'<section class="sect">'+(x.name?'<h2 class="sh">'+esc(x.name)+'<small>'+x.items.length+'</small></h2>':'')+(x.items.length?'<div class="grid">'+x.items.map(card).join('')+'</div>':'<p class="hint" style="text-align:center">Sin ramos todavía en esta sección.</p>')+'</section>').join('');
 }
 function renderMain(){const c=$('#chips'),m=$('#main');if(c)c.innerHTML=chipsHtml();if(m)m.innerHTML=mainHtml()}
 function openSections(){
