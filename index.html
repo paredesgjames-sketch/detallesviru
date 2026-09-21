@@ -197,7 +197,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=13;
+const BUILD=14;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -361,6 +361,7 @@ function openSettings(){
     <label>Repositorio</label><input type="text" data-g="repo" value="${esc(gh.repo)}" autocapitalize="off" autocorrect="off">
     <label>Token de acceso</label><input type="password" data-g="token" value="${esc(gh.token)}" autocomplete="off" placeholder="github_pat_…">
     <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez.</p>
+    <p class="hint">Permiso necesario: <b>Contents → Read and write</b>, solo para el repositorio ${esc(gh.repo)}.</p>
     <p class="hint" id="ghStatus" style="font-weight:600">${gh.token?'✓ Token guardado en este navegador':'Aún no hay token guardado'}</p>
     <button class="btn ghost" data-act="ghtest" style="width:100%;margin-top:8px">Probar conexión con GitHub</button>
     <p class="hint" id="ghTest" style="font-weight:600"></p>
@@ -409,7 +410,7 @@ async function publish(){
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='Publicar cambios'}
     const st=e&&e.status;
-    toast(st==='blocked'?'Tu red o navegador bloquea GitHub (responde una página web). Prueba con datos móviles u otro navegador, o toca ⬇ Archivo y súbelo a mano':st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo conectar con GitHub'+(e&&e.message?' ('+e.message+')':'')+'. Usa "Probar conexión" en Ajustes');
+    toast(st==='blocked'?'Tu red o navegador bloquea GitHub (responde una página web). Prueba con datos móviles u otro navegador, o toca ⬇ Archivo y súbelo a mano':st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403?'El token no tiene permiso para ESCRIBIR. En GitHub: Contents → Read and write ('+st+')':st===404?'No encuentra el repositorio o el token no tiene acceso a él ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo conectar con GitHub'+(e&&e.message?' ('+e.message+')':'')+'. Usa "Probar conexión" en Ajustes');
   }
 }
 
@@ -582,7 +583,10 @@ async function testGh(){
     if(r.status===404){set('✗ No encuentra el repositorio "'+gh.repo+'" o el token no tiene acceso a él (404)');return}
     if(!r.ok){set('✗ GitHub respondió con el código '+r.status);return}
     const j=await ghJson(r);
-    set(j.permissions&&j.permissions.push?'✓ Todo bien: puedes publicar en '+j.full_name:'✗ El token solo puede leer. Cambia Contents a "Read and write"');
+    const w=await fetch('https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+gh.path+'?t='+Date.now(),{method:'PUT',cache:'no-store',headers:{Authorization:'Bearer '+tok,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({message:'prueba de permisos',content:'eA==',sha:'0000000000000000000000000000000000000000',branch:gh.branch})});
+    if(w.status===403||w.status===401){set('✗ El token puede ver el repositorio pero NO puede escribir. En GitHub: Repository permissions → Contents → Read and write, y toca Update ('+w.status+')');return}
+    if(w.status===404){set('✗ El token no tiene acceso a este repositorio (404)');return}
+    set('✓ Todo bien: el token puede publicar en '+j.full_name);
   }catch(e){if(e&&e.status==='blocked'){set('✗ Tu red o navegador responde con una página web en lugar de GitHub. Prueba con datos móviles u otro navegador, o usa el botón ⬇ Archivo');return}set('✗ No se pudo conectar con GitHub ('+(e&&e.message||e)+'). Tu red o tu navegador podrían estar bloqueando api.github.com')}
 }
 async function shareProduct(id){
