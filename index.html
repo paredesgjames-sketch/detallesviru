@@ -197,7 +197,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=14;
+const BUILD=15;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -361,7 +361,8 @@ function openSettings(){
     <label>Repositorio</label><input type="text" data-g="repo" value="${esc(gh.repo)}" autocapitalize="off" autocorrect="off">
     <label>Token de acceso</label><input type="password" data-g="token" value="${esc(gh.token)}" autocomplete="off" placeholder="github_pat_…">
     <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez.</p>
-    <p class="hint">Permiso necesario: <b>Contents → Read and write</b>, solo para el repositorio ${esc(gh.repo)}.</p>
+    <a class="btn ghost" style="width:100%;margin-top:8px" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Catalogo%20${encodeURIComponent(gh.repo)}" target="_blank" rel="noopener">Crear token con el permiso ya marcado ↗</a>
+    <p class="hint">Se abre GitHub con <b>public_repo</b> marcado. Elige el vencimiento, toca <b>Generate token</b>, copia el texto que empieza con <b>ghp_</b> y pégalo arriba. (Con un token fino: <b>Contents → Read and write</b> en ${esc(gh.repo)}.)</p>
     <p class="hint" id="ghStatus" style="font-weight:600">${gh.token?'✓ Token guardado en este navegador':'Aún no hay token guardado'}</p>
     <button class="btn ghost" data-act="ghtest" style="width:100%;margin-top:8px">Probar conexión con GitHub</button>
     <p class="hint" id="ghTest" style="font-weight:600"></p>
