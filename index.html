@@ -37,9 +37,11 @@ button{cursor:pointer}
 .hero .note{display:inline-block;margin-top:14px;padding:7px 14px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:13px;font-weight:500}
 
 /* Grilla */
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-@media(min-width:720px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}}
-@media(min-width:1000px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.grid>.card{width:calc((100% - 14px)/2)}
+.grid>.empty{width:100%}
+@media(min-width:720px){.grid{gap:22px}.grid>.card{width:calc((100% - 44px)/3)}}
+@media(min-width:1000px){.grid>.card{width:calc((100% - 66px)/4)}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative}
 .ph{display:block;width:100%;aspect-ratio:4/5;border:0;padding:0;background:var(--soft);position:relative;overflow:hidden}
 .ph img,.ph svg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
@@ -193,7 +195,7 @@ function card(p){
 function renderApp(){
   document.title=state.brand+' · Catálogo de ramos';
   $('#app').innerHTML=`
-  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>${gh.token?'Publicar cambios':'Descargar catálogo'}</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
+  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
   <header class="hdr"><div class="brand"><span class="logo">${ROSE_ICON}</span><div><div class="bn">${esc(state.brand)}</div><div class="bt">${esc(state.tagline)}</div></div>${canAdmin&&!admin?'<button class="hbtn" data-act="admin">⚙ Administrar</button>':''}</div></header>
   <section class="hero"><p class="eyebrow">Catálogo</p><h1>Ramos de rosas para cada ocasión</h1><p>Elige tu ramo favorito, arma tu pedido y envíalo por WhatsApp. Lo confirmamos contigo al instante.</p>${state.note?`<span class="note">${esc(state.note)}</span>`:''}</section>
   <main class="grid">${state.products.length?state.products.map(card).join(''):'<div class="empty"><h2 style="font:700 28px var(--serif);margin:0 0 6px">Muy pronto</h2>Estamos preparando nuestros nuevos ramos.</div>'}</main>
@@ -274,7 +276,7 @@ function openSettings(){
     <label>Usuario de GitHub</label><input type="text" data-g="user" value="${esc(gh.user)}" autocapitalize="off" autocorrect="off">
     <label>Repositorio</label><input type="text" data-g="repo" value="${esc(gh.repo)}" autocapitalize="off" autocorrect="off">
     <label>Token de acceso</label><input type="password" data-g="token" value="${esc(gh.token)}" autocomplete="off" placeholder="github_pat_…">
-    <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Sin token, el botón descarga el archivo.</p>
+    <p class="hint">El token se guarda solo en este navegador y nunca dentro del catálogo. Lo pegas una sola vez: queda guardado en este navegador.</p>
     <div class="btns"><button class="btn primary" data-act="closeset">Listo</button></div>`);
   view={kind:'settings',id:null};
 }
@@ -304,10 +306,7 @@ function downloadHtml(html){
 }
 async function publish(){
   const html=buildHtml();
-  if(!gh.token||!gh.user||!gh.repo){
-    downloadHtml(html);try{localStorage.removeItem('qd-draft')}catch(e){}
-    dirty=false;toast('Descargado. Súbelo a tu repositorio para actualizar el catálogo');return;
-  }
+  if(!gh.token||!gh.user||!gh.repo){toast('Pega tu token una sola vez y ya podrás publicar directo');openSettings();return}
   const btn=document.querySelector('.pub');if(btn){btn.disabled=true;btn.textContent='Publicando…'}
   try{
     const api='https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+gh.path;
