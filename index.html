@@ -3,6 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Q'Detalles Virú · Catálogo de ramos</title>
+<meta name="description" content="Catálogo de ramos de rosas y detalles. Elige tu ramo y haz tu pedido por WhatsApp.">
+<meta name="theme-color" content="#9b2447">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap">
 <style>
 :root{
@@ -93,7 +95,7 @@ footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);text-al
 .tot{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 4px}
 .tot b{font:700 30px/1 var(--serif);color:var(--accent)}
 label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 4px;letter-spacing:.02em}
-input[type=text],input[type=password],input[type=date],input[type=time],input[type=tel],input[type=number],textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;outline:none;font-size:16px}
+input[type=text],input[type=password],input[type=search],input[type=date],input[type=time],input[type=tel],input[type=number],textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;outline:none;font-size:16px}
 input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -110,8 +112,8 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 .acts button{border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600}
 .acts .pub{background:#f4b73f;border-color:#f4b73f;color:#2a1a1f}
 .acts .pub[disabled]{opacity:.4;pointer-events:none}
-.acard{display:flex;gap:6px;padding:8px;background:var(--soft);border-top:1px solid var(--line)}
-.acard button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 4px;font-size:12px;font-weight:600}
+.acard{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--soft);border-top:1px solid var(--line)}
+.acard button{flex:1 1 28%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 4px;font-size:12px;font-weight:600}
 .acard .dl{color:#b3261e}
 .ov{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
 .fbtn{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:12px;font-weight:600;font-size:14px;color:var(--ink);overflow:hidden;background:var(--bg)}
@@ -134,6 +136,14 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 .tile:hover .tph img,.tile:hover .tph svg{transform:scale(1.05)}
 .tt{position:absolute;left:0;right:0;bottom:0;padding:34px 12px 12px;background:linear-gradient(transparent,rgba(20,8,12,.86));color:#fff;display:flex;flex-direction:column;gap:2px}
 .tt b{font:700 21px/1.1 var(--serif)}.tt small{font-size:12px;opacity:.88}
+.tools{display:flex;gap:8px;margin:4px 0 10px}
+.tools input{flex:1;min-width:0}
+.tools select{width:auto;flex:none;max-width:46%}
+.tag.b{background:var(--accent);color:var(--accent-ink)}
+.tag.off{left:auto;right:10px;background:#1c9d55;color:#fff}
+.old{font:500 13px var(--sans);color:var(--muted);margin-left:8px;text-decoration:line-through}
+.wafab{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:28;pointer-events:auto;background:var(--wa);color:#fff;border-radius:999px;padding:11px 16px;font-weight:600;font-size:14px;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.sub{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;padding-top:6px}
 .back{border:0;background:none;color:var(--accent);font-weight:600;font-size:14px;padding:8px 0;margin:2px 0 6px;display:block}
 .sect{margin-top:26px}.sect:first-child{margin-top:10px}
 .sh{margin:0 0 14px;font:700 clamp(24px,5vw,32px)/1.1 var(--serif);text-align:center}
@@ -156,6 +166,8 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
+const BUILD=7;
+let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
 try{ const c=JSON.parse(localStorage.getItem('qd-cart')||'null'); if(c){cart=c.cart||{};form=Object.assign(form,c.form||{});} }catch(e){}
@@ -178,12 +190,19 @@ function roseArt(t){
   return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg${t}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P[0]}"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs><rect width="400" height="500" fill="url(#bg${t})"/><g fill="#5f8a5b"><ellipse cx="110" cy="200" rx="60" ry="22" transform="rotate(-30 110 200)"/><ellipse cx="290" cy="200" rx="60" ry="22" transform="rotate(30 290 200)"/><ellipse cx="200" cy="120" rx="22" ry="60" opacity=".85"/></g>${rose(140,250,62)}${rose(262,250,62)}${rose(200,190,70)}${rose(200,290,58)}<path d="M85 330 L315 330 L235 480 L165 480 Z" fill="#ffffff" opacity=".9"/><path d="M85 330 L315 330 L282 392 L118 392 Z" fill="${P[2]}" opacity=".85"/></svg>`;
 }
 const chip=p=>p.roses?'<span class="chip">🌹 '+p.roses+' rosas</span>':'';
+const oldP=p=>Number(p.oldPrice)>Number(p.price)?Number(p.oldPrice):0;
+const priceHtml=p=>money(p.price)+(oldP(p)?'<s class="old">'+money(oldP(p))+'</s>':'');
+const offPct=p=>oldP(p)?Math.round((1-Number(p.price)/oldP(p))*100):0;
+const badgeHtml=p=>(p.badge?'<span class="tag b">'+esc(p.badge)+'</span>':'')+(offPct(p)>0?'<span class="tag off">-'+offPct(p)+'%</span>':'');
+const sortL=l=>sortBy==='asc'?l.slice().sort((a,b)=>a.price-b.price):sortBy==='desc'?l.slice().sort((a,b)=>b.price-a.price):l;
 const imgOf=p=>p.img?`<img src="${p.img}" alt="${esc(p.name)}" loading="lazy">`:roseArt(p.tone);
 
 /* ---------- Carrito ---------- */
 const cartItems=()=>Object.keys(cart).map(id=>({p:byId(id),q:cart[id]})).filter(x=>x.p&&x.p.avail!==false&&x.q>0);
 const cartCount=()=>cartItems().reduce((a,x)=>a+x.q,0);
 const cartTotal=()=>cartItems().reduce((a,x)=>a+x.q*Number(x.p.price),0);
+const deliveryFee=()=>form.mode==='delivery'?(parseFloat(String(state.delivery||'').replace(',','.'))||0):0;
+const grand=()=>cartTotal()+deliveryFee();
 function ctl(p){
   if(p.avail===false) return '<span class="soldtxt">No disponible</span>';
   const q=cart[p.id]||0;
@@ -202,17 +221,18 @@ function refresh(id){
 }
 function renderBar(){
   const n=cartCount();
-  $('#bar').innerHTML=n&&view.kind===null?`<button class="cartbar" data-act="cart"><span><span class="n">${n}</span>Ver mi pedido</span><span>${money(cartTotal())}</span></button>`:'';
+  const fab=(!admin&&view.kind===null&&waNum())?'<a class="wafab" href="https://wa.me/'+waNum()+'?text='+encodeURIComponent('Hola '+state.brand+', tengo una consulta sobre un ramo 🌹')+'" target="_blank" rel="noopener">💬 ¿Dudas? Escríbenos</a>':'';
+  $('#bar').innerHTML=fab+(n&&view.kind===null?`<button class="cartbar" data-act="cart"><span><span class="n">${n}</span>Ver mi pedido</span><span>${money(cartTotal())}</span></button>`:'');
 }
 
 /* ---------- Render principal ---------- */
 function card(p){
   const sold=p.avail===false;
   return `<article class="card ${sold?'sold':''}">
-    <button class="ph" data-act="detail" data-id="${p.id}" aria-label="Ver ${esc(p.name)}">${imgOf(p)}${sold?'<span class="tag">AGOTADO</span>':''}</button>
+    <button class="ph" data-act="detail" data-id="${p.id}" aria-label="Ver ${esc(p.name)}">${imgOf(p)}${sold?'<span class="tag">AGOTADO</span>':badgeHtml(p)}</button>
     <div class="info"><h3>${esc(p.name)}</h3>${chip(p)}<p class="d">${esc(p.desc)}</p>
-      <div class="row"><span class="price">${money(p.price)}</span><span class="ctl" data-ctl="${p.id}">${ctl(p)}</span></div></div>
-    ${admin?`<div class="acard"><button data-act="mvl" data-id="${p.id}" aria-label="Mover antes">◀</button><button data-act="edit" data-id="${p.id}">Editar</button><button class="dl" data-act="del" data-id="${p.id}">Eliminar</button><button data-act="mvr" data-id="${p.id}" aria-label="Mover después">▶</button></div>`:''}
+      <div class="row"><span class="price">${priceHtml(p)}</span><span class="ctl" data-ctl="${p.id}">${ctl(p)}</span></div></div>
+    ${admin?`<div class="acard"><button data-act="mvl" data-id="${p.id}" aria-label="Mover antes">◀</button><button data-act="edit" data-id="${p.id}">Editar</button><button data-act="mvr" data-id="${p.id}" aria-label="Mover después">▶</button><button data-act="dup" data-id="${p.id}">Duplicar</button><button data-act="tog" data-id="${p.id}">${sold?'Activar':'Agotar'}</button><button class="dl" data-act="del" data-id="${p.id}">Eliminar</button></div>`:''}
   </article>`;
 }
 function renderApp(){
@@ -221,6 +241,7 @@ function renderApp(){
   ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button data-act="bulk">Carga masiva</button><button data-act="secs">Secciones</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
   <header class="hdr"><div class="brand"><span class="logo">${ROSE_ICON}</span><div><div class="bn">${esc(state.brand)}</div><div class="bt">${esc(state.tagline)}</div></div>${canAdmin&&!admin?'<button class="hbtn" data-act="admin">⚙ Administrar</button>':''}</div></header>
   <section class="hero"><p class="eyebrow">Catálogo</p><h1>Ramos de rosas para cada ocasión</h1><p>Elige tu ramo favorito, arma tu pedido y envíalo por WhatsApp. Lo confirmamos contigo al instante.</p>${state.note?`<span class="note">${esc(state.note)}</span>`:''}</section>
+  ${state.products.length>=3?`<div class="tools"><input type="search" id="q" placeholder="Buscar ramo…" value="${esc(query)}" autocomplete="off"><select id="sort"><option value="">Ordenar</option><option value="asc" ${sortBy==='asc'?'selected':''}>Precio: menor a mayor</option><option value="desc" ${sortBy==='desc'?'selected':''}>Precio: mayor a menor</option></select></div>`:''}
   <nav id="chips" class="chips">${chipsHtml()}</nav>
   <main id="main">${mainHtml()}</main>
   <footer>© ${esc(state.brand)} · Hecho con cariño</footer>`;
@@ -235,14 +256,14 @@ function openModal(html){
 function closeModal(){$('#modal').innerHTML='';document.body.style.overflow='';view={kind:null,id:null};editing=null;renderBar();}
 function openDetail(id){
   const p=byId(id);if(!p)return;view={kind:'detail',id};
-  openModal(`<div class="det"><div class="big">${imgOf(p)}</div><h2>${esc(p.name)}</h2>${chip(p)}<div class="price" style="margin-top:8px">${money(p.price)}</div><p>${esc(p.desc)}</p><div style="display:flex;justify-content:flex-end" class="ctl" data-ctl="${p.id}">${ctl(p)}</div></div>`);
+  openModal(`<div class="det"><div class="big">${imgOf(p)}</div><h2>${esc(p.name)}</h2>${chip(p)}<div class="price" style="margin-top:8px">${priceHtml(p)}</div><p>${esc(p.desc)}</p><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><button class="btn ghost" data-act="share" data-id="${p.id}">🔗 Compartir</button><span class="ctl" data-ctl="${p.id}">${ctl(p)}</span></div></div>`);
   renderBar();
 }
 const fmtDate=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||'');return m?`${m[3]}/${m[2]}/${m[1]}`:d};
 function waText(){
   const L=[`Hola ${state.brand} 🌹`,'Quisiera hacer este pedido:',''];
   cartItems().forEach(i=>L.push(`• ${i.q} × ${i.p.name}${i.p.roses?' ('+i.p.roses+' rosas)':''} — ${money(i.p.price*i.q)}`));
-  L.push('',`*Total: ${money(cartTotal())}*`,'');
+  L.push('');if(deliveryFee())L.push(`Delivery: ${money(deliveryFee())}`);L.push(`*Total: ${money(grand())}*`,'');
   if(form.name.trim())L.push(`Nombre: ${form.name.trim()}`);
   L.push('Entrega: '+(form.mode==='delivery'?'Delivery'+(form.addr.trim()?' – '+form.addr.trim():''):'Recojo en tienda'));
   if(form.date)L.push(`Fecha: ${fmtDate(form.date)}${form.time?' '+form.time:''}`);
@@ -259,7 +280,7 @@ function openCart(keep){
   if(!its.length){openModal(`<h2>Mi pedido</h2><p style="color:var(--muted)">Tu pedido está vacío. Añade un ramo para empezar.</p><div class="btns"><button class="btn primary" data-act="close">Ver catálogo</button></div>`);view={kind:'cart',id:null};return}
   openModal(`<h2>Mi pedido</h2>
     ${its.map(({p,q})=>`<div class="line"><div class="th">${imgOf(p)}</div><div class="nm"><b>${esc(p.name)}</b><small>${money(p.price)} c/u</small></div><div class="step"><button data-act="dec" data-id="${p.id}" aria-label="Quitar uno">−</button><span>${q}</span><button data-act="inc" data-id="${p.id}" aria-label="Agregar uno">+</button></div></div>`).join('')}
-    <div class="tot"><span style="color:var(--muted)">Total</span><b>${money(cartTotal())}</b></div>
+    ${deliveryFee()?`<div class="sub"><span>Subtotal</span><span>${money(cartTotal())}</span></div><div class="sub"><span>Delivery</span><span>${money(deliveryFee())}</span></div>`:''}<div class="tot"><span style="color:var(--muted)">Total</span><b>${money(grand())}</b></div>${form.mode==='delivery'&&!deliveryFee()?'<p class="hint">El costo del delivery se confirma según tu zona.</p>':''}
     <p class="sec">Tus datos</p>
     <label>Tu nombre</label><input type="text" data-f="name" value="${esc(form.name)}" placeholder="Ej. María Pérez" autocomplete="name">
     <label>Entrega</label><div class="seg"><button data-act="mode" data-v="recojo" class="${form.mode==='recojo'?'on':''}">Recojo en tienda</button><button data-act="mode" data-v="delivery" class="${form.mode==='delivery'?'on':''}">Delivery</button></div>
@@ -274,16 +295,18 @@ function openCart(keep){
 
 /* ---------- Admin ---------- */
 const markDirty=()=>{dirty=true;try{localStorage.setItem('qd-draft',JSON.stringify(state))}catch(e){}const b=document.querySelector('.pub');if(b)b.removeAttribute('disabled')};
-function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600)}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),4200)}
 function openEditor(id){
   const p=id?byId(id):null;
-  editing=p?Object.assign({},p):{id:null,cat:(curSec&&curSec!=='Otros ramos'?curSec:''),name:'',price:'',roses:'',desc:'',img:'',tone:Math.floor(Math.random()*3),avail:true};
+  editing=p?Object.assign({},p):{id:null,cat:(curSec&&curSec!=='Otros ramos'?curSec:''),name:'',price:'',oldPrice:'',badge:'',roses:'',desc:'',img:'',tone:Math.floor(Math.random()*3),avail:true};
   view={kind:'editor',id:null};
   openModal(`<h2>${p?'Editar ramo':'Nuevo ramo'}</h2>
     <div class="drop" id="drop"><span id="dropin">${editing.img||p?imgOf(editing):'📷<br>Toca para elegir la foto del ramo'}</span><input class="ov imgin" type="file" accept="image/*"></div>
     <div class="fbtn">📸 Tomar foto con la cámara<input class="ov imgin" type="file" accept="image/*" capture="environment"></div>
     <label>Nombre</label><input type="text" data-e="name" value="${esc(editing.name)}" placeholder="Ej. Ramo Pasión">
     <label>Precio (S/)</label><input type="text" inputmode="decimal" data-e="price" value="${esc(editing.price)}" placeholder="Ej. 129">
+    <label>Precio anterior (opcional, para mostrar oferta)</label><input type="text" inputmode="decimal" data-e="oldPrice" value="${esc(editing.oldPrice||'')}" placeholder="Ej. 149">
+    <label>Etiqueta (opcional)</label><select data-e="badge">${['','Nuevo','Más vendido','Oferta','Edición limitada'].map(b=>`<option value="${b}" ${(editing.badge||'')===b?'selected':''}>${b||'(Sin etiqueta)'}</option>`).join('')}</select>
     <label>Sección</label><select data-e="cat"><option value="">(Sin sección)</option>${secList().map(s=>`<option value="${esc(s)}" ${editing.cat===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
     <input type="text" data-e="newcat" placeholder="…o escribe una sección nueva" style="margin-top:8px">
     <label>Cantidad de rosas (opcional)</label><input type="text" inputmode="numeric" data-e="roses" value="${esc(editing.roses||'')}" placeholder="Ej. 12">
@@ -300,6 +323,8 @@ function openSettings(){
     <label>Aviso destacado (opcional)</label><input type="text" data-s="note" value="${esc(state.note)}" placeholder="Ej. Pedidos con 24 h de anticipación">
     <label>Tu WhatsApp (con código de país)</label><input type="tel" inputmode="numeric" data-s="whatsapp" value="${esc(state.whatsapp)}" placeholder="Ej. 51987654321">
     <p class="hint">Los pedidos de tus clientes llegarán a este número. Sin espacios ni el signo +.</p>
+    <label>Costo de delivery (S/) — opcional</label><input type="text" inputmode="decimal" data-s="delivery" value="${esc(state.delivery||'')}" placeholder="Ej. 8">
+    <p class="hint">Se suma al total cuando el cliente elige delivery. Déjalo vacío si lo coordinas por WhatsApp.</p>
     <p class="sec">Publicar directo en GitHub</p>
     <label>Usuario de GitHub</label><input type="text" data-g="user" value="${esc(gh.user)}" autocapitalize="off" autocorrect="off">
     <label>Repositorio</label><input type="text" data-g="repo" value="${esc(gh.repo)}" autocapitalize="off" autocorrect="off">
@@ -340,6 +365,7 @@ async function publish(){
   try{
     const api='https://api.github.com/repos/'+encodeURIComponent(gh.user)+'/'+encodeURIComponent(gh.repo)+'/contents/'+gh.path;
     const H={Authorization:'Bearer '+gh.token,Accept:'application/vnd.github+json'};
+    try{const rr=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:Object.assign({},H,{Accept:'application/vnd.github.raw+json'})});if(rr.ok){const txt=await rr.text();const mm=/const BUILD=(\d+)/.exec(txt);if(mm&&Number(mm[1])>BUILD){const e=new Error('stale');e.status='stale';throw e}}}catch(er){if(er&&er.status==='stale')throw er}
     let sha;const r=await fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:H});
     if(r.ok){sha=(await r.json()).sha}else if(r.status!==404){const e=new Error('get');e.status=r.status;throw e}
     const body={message:'Actualizar catálogo',content:b64(html),branch:gh.branch};if(sha)body.sha=sha;
@@ -350,15 +376,15 @@ async function publish(){
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='Publicar cambios'}
     const st=e&&e.status;
-    toast(st===401?'El token no es válido o venció':st===403||st===404?'Revisa usuario, repositorio y permisos del token':st===422?'GitHub rechazó el archivo. Reintenta':'No se pudo publicar. Revisa tu conexión');
+    toast(st==='stale'?'Hay una versión más nueva del catálogo. Recarga con Ctrl+F5 y vuelve a publicar':st===401?'El token no es válido o venció (401)':st===403||st===404?'Revisa usuario, repositorio y permisos del token ('+st+')':st===409?'El catálogo cambió mientras publicabas. Reintenta (409)':st===422?'GitHub rechazó el archivo. Reintenta (422)':'No se pudo publicar. Revisa tu conexión');
   }
 }
 
 /* ---------- Carga masiva ---------- */
-let bulk={text:'',photos:{},order:[],items:[]};
+let bulk={text:'',photos:{},order:[],items:[],sec:'',newsec:''};
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const baseName=f=>norm(f).replace(/\.[a-z0-9]+$/,'');
-const COLS={name:['nombre','name','ramo','producto'],price:['precio','price','costo'],roses:['rosas','cantidad_rosas','cantidad de rosas','cant rosas','cantidad rosas','cantidad'],desc:['descripcion','description','detalle'],avail:['disponible','activo','estado','stock'],img:['foto','imagen','archivo','image','foto_archivo'],cat:['seccion','categoria','grupo','coleccion']};
+const COLS={name:['nombre','name','ramo','producto'],price:['precio','price','costo'],roses:['rosas','cantidad_rosas','cantidad de rosas','cant rosas','cantidad rosas','cantidad'],desc:['descripcion','description','detalle'],avail:['disponible','activo','estado','stock'],img:['foto','imagen','archivo','image','foto_archivo'],cat:['seccion','categoria','grupo','coleccion'],oldPrice:['precio_anterior','precio anterior','antes','precio_antes'],badge:['etiqueta','badge','distintivo']};
 function parseTable(txt){
   txt=String(txt||'').replace(/^\uFEFF/,'');
   const first=txt.split(/\r?\n/)[0]||'';
@@ -390,7 +416,7 @@ function mapRows(rows){
     if(isNaN(price)||price<0){errors.push('Fila '+(n+2)+' ('+name+'): precio no válido');return}
     const ro=parseInt(get('roses'),10);
     const av=norm(get('avail'));
-    items.push({name:name,price:price,desc:get('desc'),roses:ro>0?ro:'',avail:!['no','0','agotado','false','inactivo'].includes(av),imgName:get('img'),cat:get('cat')});
+    items.push({name:name,price:price,desc:get('desc'),roses:ro>0?ro:'',avail:!['no','0','agotado','false','inactivo'].includes(av),imgName:get('img'),cat:get('cat'),oldPrice:parseFloat(get('oldPrice').replace(/[^0-9,.]/g,'').replace(',','.'))||'',badge:get('badge')});
   });
   return{items:items,errors:errors};
 }
@@ -412,7 +438,7 @@ async function bulkLoadPhotos(files){
   toast('Fotos listas ✓');
 }
 function bulkTemplate(){
-  const rows=[['nombre','precio','cantidad_rosas','descripcion','disponible','foto','seccion'],['Ramo Girasoles','65','3','3 girasoles naturales con gypsophila','si','girasoles.jpg','Girasoles naturales'],['Ramo Romance','89','12','12 rosas eternas con lazo de satén','si','romance.jpg','Rosas eternas']];
+  const rows=[['nombre','precio','cantidad_rosas','descripcion','disponible','foto','seccion','precio_anterior','etiqueta'],['Ramo Girasoles','65','3','3 girasoles naturales con gypsophila','si','girasoles.jpg','Girasoles naturales','','Nuevo'],['Ramo Romance','89','12','12 rosas eternas con lazo de satén','si','romance.jpg','Rosas eternas','109','Oferta']];
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='plantilla-ramos.csv';
   document.body.appendChild(a);a.click();a.remove();
@@ -420,26 +446,30 @@ function bulkTemplate(){
 function bulkPreview(){
   const res=mapRows(parseTable(bulk.text));
   bulk.items=res.items;
+  const target=(String(bulk.newsec||'').trim())||bulk.sec||'';
+  if(target)res.items.forEach(it=>{it.cat=target});
   res.items.forEach((it,i)=>{it.img=pickPhoto(it,i,res.items.length)});
   const withImg=res.items.filter(i=>i.img).length;
   const upd=res.items.filter(it=>state.products.some(p=>norm(p.name)===norm(it.name))).length;
   let h='';
-  if(res.items.length)h+='<p style="margin:12px 0 0"><b>'+res.items.length+'</b> ramos listos · '+withImg+' con foto'+(upd?' · '+upd+' actualizarán ramos que ya existen':'')+'</p><div class="pv">'+res.items.slice(0,12).map(i=>'<div>'+esc(i.name)+' — '+money(i.price)+(i.roses?' · 🌹 '+i.roses:'')+(i.img?' · 📷':'')+'</div>').join('')+(res.items.length>12?'<div>… y '+(res.items.length-12)+' más</div>':'')+'</div>';
+  if(res.items.length)h+='<p style="margin:12px 0 0"><b>'+res.items.length+'</b> ramos listos · '+withImg+' con foto'+(target?' · sección: <b>'+esc(target)+'</b>':'')+(upd?' · '+upd+' actualizarán ramos que ya existen':'')+'</p><div class="pv">'+res.items.slice(0,12).map(i=>'<div>'+esc(i.name)+' — '+money(i.price)+(i.roses?' · 🌹 '+i.roses:'')+(i.img?' · 📷':'')+'</div>').join('')+(res.items.length>12?'<div>… y '+(res.items.length-12)+' más</div>':'')+'</div>';
   if(res.errors.length)h+='<p class="err" style="margin:10px 0 0;font-size:13px">'+res.errors.slice(0,5).map(esc).join('<br>')+(res.errors.length>5?'<br>… y '+(res.errors.length-5)+' avisos más':'')+'</p>';
   if(res.items.length)h+='<button class="btn primary" data-act="bulkgo" style="width:100%;margin-top:12px">Importar '+res.items.length+' ramos</button>';
   $('#bulkPrev').innerHTML=h;
 }
 function bulkGo(){
   const items=bulk.items||[];if(!items.length)return;
+  const target=(String(bulk.newsec||'').trim())||bulk.sec||'';
+  if(target)items.forEach(it=>{it.cat=target});
   const total=state.products.reduce((a,p)=>a+(p.img||'').length,0)+items.reduce((a,i)=>a+(i.img||'').length,0);
   if(total>10000000){toast('Son demasiadas fotos: el catálogo pasaría de 10 MB. Sube menos fotos por tanda');return}
   let added=0,updated=0;
   items.forEach(it=>{
     const i=state.products.findIndex(p=>norm(p.name)===norm(it.name));
-    if(i>=0){const o=state.products[i];state.products[i]=Object.assign({},o,{price:it.price,desc:it.desc||o.desc,roses:it.roses||o.roses||'',avail:it.avail,img:it.img||o.img,cat:it.cat||o.cat||''});updated++}
-    else{state.products.push({id:uid(),name:it.name,price:it.price,desc:it.desc,img:it.img||'',tone:Math.floor(Math.random()*3),roses:it.roses||'',avail:it.avail,cat:it.cat||''});added++}
+    if(i>=0){const o=state.products[i];state.products[i]=Object.assign({},o,{price:it.price,desc:it.desc||o.desc,roses:it.roses||o.roses||'',avail:it.avail,img:it.img||o.img,cat:it.cat||o.cat||'',oldPrice:it.oldPrice||o.oldPrice||'',badge:it.badge||o.badge||''});updated++}
+    else{state.products.push({id:uid(),name:it.name,price:it.price,desc:it.desc,img:it.img||'',tone:Math.floor(Math.random()*3),roses:it.roses||'',avail:it.avail,cat:it.cat||'',oldPrice:it.oldPrice||'',badge:it.badge||''});added++}
   });
-  bulk={text:'',photos:{},order:[],items:[]};
+  bulk={text:'',photos:{},order:[],items:[],sec:'',newsec:''};
   markDirty();closeModal();renderApp();
   toast('Listo: '+added+' nuevos y '+updated+' actualizados. Toca Publicar cambios');
 }
@@ -447,12 +477,16 @@ function openBulk(){
   openModal(`<h2>Carga masiva</h2>
    <p class="sec" style="margin-top:0">1. Plantilla</p>
    <button class="btn ghost" data-act="tpl" style="width:100%;margin-top:8px">⬇ Descargar plantilla (Excel / CSV)</button>
-   <p class="hint">Columnas: nombre, precio, cantidad_rosas, descripcion, disponible (si/no), foto (nombre del archivo, por ejemplo romance.jpg) y seccion (por ejemplo Girasoles naturales).</p>
-   <p class="sec">2. Tu tabla</p>
+   <p class="hint">Columnas: nombre, precio, cantidad_rosas, descripcion, disponible (si/no), foto (nombre del archivo), seccion, precio_anterior (para ofertas) y etiqueta (Nuevo, Más vendido, Oferta).</p>
+   <p class="sec">2. ¿A qué sección van?</p>
+   <select id="bulkSec" data-b="sec"><option value="">Según la columna "seccion" del archivo</option>${secList().map(s=>`<option value="${esc(s)}" ${bulk.sec===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+   <input type="text" data-b="newsec" value="${esc(bulk.newsec)}" placeholder="…o escribe una sección nueva" style="margin-top:8px">
+   <p class="hint">Si eliges una sección aquí, todos los ramos de esta carga irán a ella.</p>
+   <p class="sec">3. Tu tabla</p>
    <div class="fbtn">📄 Elegir archivo CSV<input class="ov bulkcsv" type="file" accept=".csv,.txt,text/csv"></div>
    <label>…o pega aquí desde Excel o Google Sheets</label>
-   <textarea id="bulkText" data-b="text" rows="5" placeholder="nombre;precio;cantidad_rosas;descripcion;disponible;foto;seccion">${esc(bulk.text)}</textarea>
-   <p class="sec">3. Fotos (opcional)</p>
+   <textarea id="bulkText" data-b="text" rows="5" placeholder="nombre;precio;cantidad_rosas;descripcion;disponible;foto;seccion;precio_anterior;etiqueta">${esc(bulk.text)}</textarea>
+   <p class="sec">4. Fotos (opcional)</p>
    <div class="fbtn">🖼 Elegir fotos (varias a la vez)<input class="ov bulkph" type="file" accept="image/*" multiple></div>
    <p class="hint" id="bulkPh">${bulk.order.length} foto(s) cargada(s). Se asignan por el nombre de archivo de la columna "foto".</p>
    <div id="bulkPrev"></div>
@@ -466,8 +500,8 @@ const EMPTY='<div class="empty"><h2 style="font:700 28px var(--serif);margin:0 0
 const secList=()=>{const l=(state.sections||[]).slice();state.products.forEach(p=>{if(p.cat&&l.indexOf(p.cat)<0)l.push(p.cat)});return l};
 function groups(){
   const secs=secList();
-  const g=secs.map(n=>({name:n,items:state.products.filter(p=>p.cat===n)}));
-  const rest=state.products.filter(p=>!p.cat||secs.indexOf(p.cat)<0);
+  const g=secs.map(n=>({name:n,items:sortL(state.products.filter(p=>p.cat===n))}));
+  const rest=sortL(state.products.filter(p=>!p.cat||secs.indexOf(p.cat)<0));
   if(rest.length)g.push({name:secs.length?'Otros ramos':'',items:rest});
   return g;
 }
@@ -478,8 +512,10 @@ function chipsHtml(){
 }
 function mainHtml(){
   if(!state.products.length&&!secList().length)return EMPTY;
+  const qq=norm(query);
+  if(qq){const r=sortL(state.products.filter(p=>norm(p.name+' '+p.desc+' '+(p.cat||'')).indexOf(qq)>=0));return r.length?'<p class="hint" style="text-align:center;margin:0 0 10px">'+r.length+' resultado'+(r.length===1?'':'s')+'</p><div class="grid">'+r.map(card).join('')+'</div>':'<div class="empty">No encontramos ramos con esa búsqueda.<br><button class="back" data-act="clearq" style="margin:10px auto 0">Ver todos los ramos</button></div>'}
   const g=groups();
-  if(!g.some(x=>x.name))return '<div class="grid">'+state.products.map(card).join('')+'</div>';
+  if(!g.some(x=>x.name))return '<div class="grid">'+sortL(state.products).map(card).join('')+'</div>';
   let show=curSec?g.filter(x=>x.name===curSec):g;
   if(!show.length){curSec='';show=g}
   if(!admin)show=show.filter(x=>x.items.length);
@@ -499,6 +535,14 @@ function openSections(){
    <label>Nueva sección</label><div class="secrow" style="margin-top:0"><input type="text" id="newSec" placeholder="Ej. Girasoles naturales"><button data-act="secadd" style="width:auto;padding:0 14px;font-weight:600">Agregar</button></div>
    <div class="btns"><button class="btn primary" data-act="closesec">Listo</button></div>`);
   view={kind:'secs',id:null};
+}
+
+async function shareProduct(id){
+  const p=byId(id);if(!p)return;
+  const url=location.origin+location.pathname+'#p='+encodeURIComponent(id);
+  const text=p.name+' — '+money(p.price)+' · '+state.brand;
+  try{if(navigator.share){await navigator.share({title:p.name,text:text,url:url});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(url);toast('Enlace copiado')}catch(e){toast(url)}
 }
 
 /* ---------- Eventos ---------- */
@@ -533,6 +577,10 @@ document.addEventListener('click',e=>{
   else if(a==='tpl'){bulkTemplate()}
   else if(a==='bulkprev'){bulkPreview()}
   else if(a==='bulkgo'){bulkGo()}
+  else if(a==='clearq'){query='';const qi=$('#q');if(qi)qi.value='';renderMain()}
+  else if(a==='share'){shareProduct(id)}
+  else if(a==='dup'){const i=state.products.findIndex(p=>p.id===id);if(i>=0){const c=Object.assign({},state.products[i],{id:uid(),name:state.products[i].name+' (copia)'});state.products.splice(i+1,0,c);markDirty();renderApp();toast('Ramo duplicado. Toca Editar para cambiarlo')}}
+  else if(a==='tog'){const p=byId(id);if(p){p.avail=p.avail===false;markDirty();renderApp()}}
   else if(a==='edit'){openEditor(id)}
   else if(a==='del'){
     if(el.dataset.armed){state.products=state.products.filter(p=>p.id!==id);delete cart[id];persist();markDirty();renderApp()}
@@ -547,7 +595,8 @@ document.addEventListener('click',e=>{
     if(!String(editing.name).trim()){toast('Ponle un nombre al ramo');return}
     if(isNaN(price)||price<0){toast('Escribe un precio válido');return}
     const nc=String(editing.newcat||'').trim();const catv=nc||editing.cat||'';
-    const item={id:editing.id||uid(),cat:catv,name:String(editing.name).trim(),price:price,roses:(function(){const r=parseInt(editing.roses,10);return r>0?r:''})(),desc:String(editing.desc).trim(),img:editing.img||'',tone:editing.tone||0,avail:editing.avail!==false};
+    const op=parseFloat(String(editing.oldPrice||'').replace(',','.'));
+    const item={id:editing.id||uid(),cat:catv,oldPrice:op>0?op:'',badge:editing.badge||'',name:String(editing.name).trim(),price:price,roses:(function(){const r=parseInt(editing.roses,10);return r>0?r:''})(),desc:String(editing.desc).trim(),img:editing.img||'',tone:editing.tone||0,avail:editing.avail!==false};
     if(editing.id){const i=state.products.findIndex(p=>p.id===editing.id);state.products[i]=item}else state.products.push(item);
     markDirty();closeModal();renderApp();
   }
@@ -555,6 +604,8 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
   const t=e.target;
+  if(t.id==='q'){query=t.value;renderMain();return}
+  if(t.id==='sort'){sortBy=t.value;renderMain();return}
   if(t.dataset.f){form[t.dataset.f]=t.value;persist()}
   else if(t.dataset.e){editing[t.dataset.e]=t.type==='checkbox'?t.checked:t.value}
   else if(t.dataset.s){state[t.dataset.s]=t.value;markDirty()}
@@ -568,6 +619,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  if(t.id==='sort'){sortBy=t.value;renderMain();return}
   if(t.classList&&t.classList.contains('bulkcsv')&&t.files&&t.files[0]){
     try{bulk.text=await readText(t.files[0]);const ta=$('#bulkText');if(ta)ta.value=bulk.text;toast('Archivo cargado. Toca Revisar')}catch(err){toast('No se pudo leer el archivo')}
     t.value='';return;
@@ -584,6 +636,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modal .overlay'
 /* ---------- Inicio ---------- */
 $('#overlay-root').innerHTML='<div id="bar"></div><div id="modal"></div><div id="toast" role="status" aria-live="polite"></div>';
 renderApp();
+{const dm=/^#p=(.+)$/.exec(location.hash);if(dm){const pid=decodeURIComponent(dm[1]);if(byId(pid))openDetail(pid)}}
 if(location.hash==='#admin'){
   canAdmin=true;admin=true;
   try{const d=JSON.parse(localStorage.getItem('qd-draft')||'null');if(d&&d.products){state=d;dirty=true;}}catch(e){}
