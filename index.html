@@ -120,6 +120,17 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 .drop img,.drop svg{width:100%;height:100%;object-fit:cover}
 .chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);font-weight:500}
 .chk input{width:18px;height:18px}
+.chips{position:sticky;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:15;margin:0 -16px 8px;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);scrollbar-width:none}
+.abar~.chips{top:calc(env(safe-area-inset-top,0px) + 120px)}
+.chips::-webkit-scrollbar{display:none}
+.chips:empty{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;white-space:nowrap}
+.chips button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sect{margin-top:26px}.sect:first-child{margin-top:10px}
+.sh{margin:0 0 14px;font:700 clamp(24px,5vw,32px)/1.1 var(--serif);text-align:center}
+.sh small{font:500 13px var(--sans);color:var(--muted);margin-left:8px}
+select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;font-size:16px;outline:none}
+.secrow{display:flex;gap:6px;align-items:center;margin-top:8px}.secrow input{flex:1;min-width:0}.secrow button{flex:none;width:38px;height:42px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px}
 .chip{align-self:flex-start;display:inline-block;font-size:12px;font-weight:600;color:var(--accent);background:var(--soft);padding:3px 10px;border-radius:999px}
 .pv{max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-size:13px;margin-top:8px}.pv div{padding:4px 0;border-bottom:1px solid var(--line)}.pv div:last-child{border-bottom:0}
 .err{color:#b3261e}
@@ -198,10 +209,11 @@ function card(p){
 function renderApp(){
   document.title=state.brand+' · Catálogo de ramos';
   $('#app').innerHTML=`
-  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button data-act="bulk">Carga masiva</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
+  ${admin?`<div class="abar"><strong>Modo administrador</strong><div class="acts"><button data-act="settings">Ajustes</button><button data-act="newp">＋ Agregar ramo</button><button data-act="bulk">Carga masiva</button><button data-act="secs">Secciones</button><button class="pub" data-act="publish" ${dirty?'':'disabled'}>Publicar cambios</button><button data-act="exit">Ver como cliente</button></div></div>`:''}
   <header class="hdr"><div class="brand"><span class="logo">${ROSE_ICON}</span><div><div class="bn">${esc(state.brand)}</div><div class="bt">${esc(state.tagline)}</div></div>${canAdmin&&!admin?'<button class="hbtn" data-act="admin">⚙ Administrar</button>':''}</div></header>
   <section class="hero"><p class="eyebrow">Catálogo</p><h1>Ramos de rosas para cada ocasión</h1><p>Elige tu ramo favorito, arma tu pedido y envíalo por WhatsApp. Lo confirmamos contigo al instante.</p>${state.note?`<span class="note">${esc(state.note)}</span>`:''}</section>
-  <main class="grid">${state.products.length?state.products.map(card).join(''):'<div class="empty"><h2 style="font:700 28px var(--serif);margin:0 0 6px">Muy pronto</h2>Estamos preparando nuestros nuevos ramos.</div>'}</main>
+  <nav id="chips" class="chips">${chipsHtml()}</nav>
+  <main id="main">${mainHtml()}</main>
   <footer>© ${esc(state.brand)} · Hecho con cariño</footer>`;
   renderBar();
 }
@@ -255,13 +267,15 @@ const markDirty=()=>{dirty=true;try{localStorage.setItem('qd-draft',JSON.stringi
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600)}
 function openEditor(id){
   const p=id?byId(id):null;
-  editing=p?Object.assign({},p):{id:null,name:'',price:'',roses:'',desc:'',img:'',tone:Math.floor(Math.random()*3),avail:true};
+  editing=p?Object.assign({},p):{id:null,cat:(curSec&&curSec!=='Otros ramos'?curSec:''),name:'',price:'',roses:'',desc:'',img:'',tone:Math.floor(Math.random()*3),avail:true};
   view={kind:'editor',id:null};
   openModal(`<h2>${p?'Editar ramo':'Nuevo ramo'}</h2>
     <div class="drop" id="drop"><span id="dropin">${editing.img||p?imgOf(editing):'📷<br>Toca para elegir la foto del ramo'}</span><input class="ov imgin" type="file" accept="image/*"></div>
     <div class="fbtn">📸 Tomar foto con la cámara<input class="ov imgin" type="file" accept="image/*" capture="environment"></div>
     <label>Nombre</label><input type="text" data-e="name" value="${esc(editing.name)}" placeholder="Ej. Ramo Pasión">
     <label>Precio (S/)</label><input type="text" inputmode="decimal" data-e="price" value="${esc(editing.price)}" placeholder="Ej. 129">
+    <label>Sección</label><select data-e="cat"><option value="">(Sin sección)</option>${secList().map(s=>`<option value="${esc(s)}" ${editing.cat===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+    <input type="text" data-e="newcat" placeholder="…o escribe una sección nueva" style="margin-top:8px">
     <label>Cantidad de rosas (opcional)</label><input type="text" inputmode="numeric" data-e="roses" value="${esc(editing.roses||'')}" placeholder="Ej. 12">
     <label>Descripción</label><textarea data-e="desc" rows="3" placeholder="Cantidad de rosas, colores, detalles incluidos…">${esc(editing.desc)}</textarea>
     <label class="chk" style="margin-top:14px"><input type="checkbox" data-e="avail" ${editing.avail!==false?'checked':''}> Disponible para pedir</label>
@@ -333,7 +347,7 @@ async function publish(){
 let bulk={text:'',photos:{},order:[],items:[]};
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const baseName=f=>norm(f).replace(/\.[a-z0-9]+$/,'');
-const COLS={name:['nombre','name','ramo','producto'],price:['precio','price','costo'],roses:['rosas','cantidad_rosas','cantidad de rosas','cant rosas','cantidad rosas','cantidad'],desc:['descripcion','description','detalle'],avail:['disponible','activo','estado','stock'],img:['foto','imagen','archivo','image','foto_archivo']};
+const COLS={name:['nombre','name','ramo','producto'],price:['precio','price','costo'],roses:['rosas','cantidad_rosas','cantidad de rosas','cant rosas','cantidad rosas','cantidad'],desc:['descripcion','description','detalle'],avail:['disponible','activo','estado','stock'],img:['foto','imagen','archivo','image','foto_archivo'],cat:['seccion','categoria','grupo','coleccion']};
 function parseTable(txt){
   txt=String(txt||'').replace(/^\uFEFF/,'');
   const first=txt.split(/\r?\n/)[0]||'';
@@ -365,7 +379,7 @@ function mapRows(rows){
     if(isNaN(price)||price<0){errors.push('Fila '+(n+2)+' ('+name+'): precio no válido');return}
     const ro=parseInt(get('roses'),10);
     const av=norm(get('avail'));
-    items.push({name:name,price:price,desc:get('desc'),roses:ro>0?ro:'',avail:!['no','0','agotado','false','inactivo'].includes(av),imgName:get('img')});
+    items.push({name:name,price:price,desc:get('desc'),roses:ro>0?ro:'',avail:!['no','0','agotado','false','inactivo'].includes(av),imgName:get('img'),cat:get('cat')});
   });
   return{items:items,errors:errors};
 }
@@ -387,7 +401,7 @@ async function bulkLoadPhotos(files){
   toast('Fotos listas ✓');
 }
 function bulkTemplate(){
-  const rows=[['nombre','precio','cantidad_rosas','descripcion','disponible','foto'],['Ramo Romance','89','12','12 rosas rojas con follaje fino y lazo de satén','si','romance.jpg'],['Ramo Ternura','179','36','36 rosas lila con gypsophila','si','ternura.jpg']];
+  const rows=[['nombre','precio','cantidad_rosas','descripcion','disponible','foto','seccion'],['Ramo Girasoles','65','3','3 girasoles naturales con gypsophila','si','girasoles.jpg','Girasoles naturales'],['Ramo Romance','89','12','12 rosas eternas con lazo de satén','si','romance.jpg','Rosas eternas']];
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='plantilla-ramos.csv';
   document.body.appendChild(a);a.click();a.remove();
@@ -411,8 +425,8 @@ function bulkGo(){
   let added=0,updated=0;
   items.forEach(it=>{
     const i=state.products.findIndex(p=>norm(p.name)===norm(it.name));
-    if(i>=0){const o=state.products[i];state.products[i]=Object.assign({},o,{price:it.price,desc:it.desc||o.desc,roses:it.roses||o.roses||'',avail:it.avail,img:it.img||o.img});updated++}
-    else{state.products.push({id:uid(),name:it.name,price:it.price,desc:it.desc,img:it.img||'',tone:Math.floor(Math.random()*3),roses:it.roses||'',avail:it.avail});added++}
+    if(i>=0){const o=state.products[i];state.products[i]=Object.assign({},o,{price:it.price,desc:it.desc||o.desc,roses:it.roses||o.roses||'',avail:it.avail,img:it.img||o.img,cat:it.cat||o.cat||''});updated++}
+    else{state.products.push({id:uid(),name:it.name,price:it.price,desc:it.desc,img:it.img||'',tone:Math.floor(Math.random()*3),roses:it.roses||'',avail:it.avail,cat:it.cat||''});added++}
   });
   bulk={text:'',photos:{},order:[],items:[]};
   markDirty();closeModal();renderApp();
@@ -422,17 +436,54 @@ function openBulk(){
   openModal(`<h2>Carga masiva</h2>
    <p class="sec" style="margin-top:0">1. Plantilla</p>
    <button class="btn ghost" data-act="tpl" style="width:100%;margin-top:8px">⬇ Descargar plantilla (Excel / CSV)</button>
-   <p class="hint">Columnas: nombre, precio, cantidad_rosas, descripcion, disponible (si/no) y foto (nombre del archivo, por ejemplo romance.jpg).</p>
+   <p class="hint">Columnas: nombre, precio, cantidad_rosas, descripcion, disponible (si/no), foto (nombre del archivo, por ejemplo romance.jpg) y seccion (por ejemplo Girasoles naturales).</p>
    <p class="sec">2. Tu tabla</p>
    <div class="fbtn">📄 Elegir archivo CSV<input class="ov bulkcsv" type="file" accept=".csv,.txt,text/csv"></div>
    <label>…o pega aquí desde Excel o Google Sheets</label>
-   <textarea id="bulkText" data-b="text" rows="5" placeholder="nombre;precio;cantidad_rosas;descripcion;disponible;foto">${esc(bulk.text)}</textarea>
+   <textarea id="bulkText" data-b="text" rows="5" placeholder="nombre;precio;cantidad_rosas;descripcion;disponible;foto;seccion">${esc(bulk.text)}</textarea>
    <p class="sec">3. Fotos (opcional)</p>
    <div class="fbtn">🖼 Elegir fotos (varias a la vez)<input class="ov bulkph" type="file" accept="image/*" multiple></div>
    <p class="hint" id="bulkPh">${bulk.order.length} foto(s) cargada(s). Se asignan por el nombre de archivo de la columna "foto".</p>
    <div id="bulkPrev"></div>
    <div class="btns"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" data-act="bulkprev">Revisar</button></div>`);
   view={kind:'bulk',id:null};
+}
+
+/* ---------- Secciones ---------- */
+let curSec='';
+const EMPTY='<div class="empty"><h2 style="font:700 28px var(--serif);margin:0 0 6px">Muy pronto</h2>Estamos preparando nuestros nuevos ramos.</div>';
+const secList=()=>{const l=(state.sections||[]).slice();state.products.forEach(p=>{if(p.cat&&l.indexOf(p.cat)<0)l.push(p.cat)});return l};
+function groups(){
+  const secs=secList();
+  const g=secs.map(n=>({name:n,items:state.products.filter(p=>p.cat===n)}));
+  const rest=state.products.filter(p=>!p.cat||secs.indexOf(p.cat)<0);
+  if(rest.length)g.push({name:secs.length?'Otros ramos':'',items:rest});
+  return g;
+}
+function chipsHtml(){
+  const g=groups().filter(x=>x.name&&(x.items.length||admin));
+  if(!g.length)return '';
+  return '<button class="'+(curSec?'':'on')+'" data-act="sec" data-v="">Todos</button>'+g.map(x=>'<button class="'+(curSec===x.name?'on':'')+'" data-act="sec" data-v="'+esc(x.name)+'">'+esc(x.name)+'</button>').join('');
+}
+function mainHtml(){
+  if(!state.products.length&&!secList().length)return EMPTY;
+  const g=groups();
+  if(!g.some(x=>x.name))return '<div class="grid">'+state.products.map(card).join('')+'</div>';
+  let show=curSec?g.filter(x=>x.name===curSec):g;
+  if(!show.length){curSec='';show=g}
+  if(!admin)show=show.filter(x=>x.items.length);
+  return show.map(x=>'<section class="sect">'+(x.name?'<h2 class="sh">'+esc(x.name)+'<small>'+x.items.length+'</small></h2>':'')+(x.items.length?'<div class="grid">'+x.items.map(card).join('')+'</div>':'<p class="hint" style="text-align:center">Sin ramos todavía en esta sección.</p>')+'</section>').join('');
+}
+function renderMain(){const c=$('#chips'),m=$('#main');if(c)c.innerHTML=chipsHtml();if(m)m.innerHTML=mainHtml()}
+function openSections(){
+  state.sections=secList();
+  const l=state.sections;
+  openModal(`<h2>Secciones</h2>
+   <p class="hint" style="margin:0 0 6px">Agrupa tus ramos, por ejemplo "Girasoles naturales" o "Rosas eternas". Cambia el orden con las flechas.</p>
+   ${l.map((s,i)=>`<div class="secrow"><input type="text" data-sec="${i}" value="${esc(s)}"><button data-act="secup" data-i="${i}" aria-label="Subir">↑</button><button data-act="secdn" data-i="${i}" aria-label="Bajar">↓</button><button data-act="secdel" data-i="${i}" aria-label="Quitar" style="color:#b3261e">✕</button></div>`).join('')||'<p class="hint">Aún no tienes secciones.</p>'}
+   <label>Nueva sección</label><div class="secrow" style="margin-top:0"><input type="text" id="newSec" placeholder="Ej. Girasoles naturales"><button data-act="secadd" style="width:auto;padding:0 14px;font-weight:600">Agregar</button></div>
+   <div class="btns"><button class="btn primary" data-act="closesec">Listo</button></div>`);
+  view={kind:'secs',id:null};
 }
 
 /* ---------- Eventos ---------- */
@@ -458,6 +509,12 @@ document.addEventListener('click',e=>{
   else if(a==='settings'){openSettings()}
   else if(a==='newp'){openEditor(null)}
   else if(a==='bulk'){openBulk()}
+  else if(a==='sec'){curSec=el.dataset.v||'';renderMain();const c=$('#chips');if(c)window.scrollTo({top:Math.max(0,c.offsetTop-70),behavior:'smooth'})}
+  else if(a==='secs'){openSections()}
+  else if(a==='secup'||a==='secdn'){const i=+el.dataset.i,j=a==='secup'?i-1:i+1;if(j>=0&&j<state.sections.length){const t=state.sections[i];state.sections[i]=state.sections[j];state.sections[j]=t;markDirty();openSections()}}
+  else if(a==='secdel'){const i=+el.dataset.i,nm=state.sections[i];state.products.forEach(p=>{if(p.cat===nm)p.cat=''});state.sections.splice(i,1);markDirty();openSections()}
+  else if(a==='secadd'){const v=(($('#newSec')||{}).value||'').trim();if(v&&state.sections.indexOf(v)<0){state.sections.push(v);markDirty()}openSections()}
+  else if(a==='closesec'){closeModal();curSec='';renderApp()}
   else if(a==='tpl'){bulkTemplate()}
   else if(a==='bulkprev'){bulkPreview()}
   else if(a==='bulkgo'){bulkGo()}
@@ -467,14 +524,15 @@ document.addEventListener('click',e=>{
     else{el.dataset.armed='1';el.textContent='¿Seguro?';setTimeout(()=>{if(el.isConnected){delete el.dataset.armed;el.textContent='Eliminar'}},3000)}
   }
   else if(a==='mvl'||a==='mvr'){
-    const i=state.products.findIndex(p=>p.id===id),j=a==='mvl'?i-1:i+1;
+    const i=state.products.findIndex(p=>p.id===id);let j=i;const cc=(state.products[i].cat||'');do{j+=a==='mvl'?-1:1}while(j>=0&&j<state.products.length&&(state.products[j].cat||'')!==cc);
     if(j>=0&&j<state.products.length){const t=state.products[i];state.products[i]=state.products[j];state.products[j]=t;markDirty();renderApp()}
   }
   else if(a==='saveitem'){
     const price=parseFloat(String(editing.price).replace(',','.'));
     if(!String(editing.name).trim()){toast('Ponle un nombre al ramo');return}
     if(isNaN(price)||price<0){toast('Escribe un precio válido');return}
-    const item={id:editing.id||uid(),name:String(editing.name).trim(),price:price,roses:(function(){const r=parseInt(editing.roses,10);return r>0?r:''})(),desc:String(editing.desc).trim(),img:editing.img||'',tone:editing.tone||0,avail:editing.avail!==false};
+    const nc=String(editing.newcat||'').trim();const catv=nc||editing.cat||'';
+    const item={id:editing.id||uid(),cat:catv,name:String(editing.name).trim(),price:price,roses:(function(){const r=parseInt(editing.roses,10);return r>0?r:''})(),desc:String(editing.desc).trim(),img:editing.img||'',tone:editing.tone||0,avail:editing.avail!==false};
     if(editing.id){const i=state.products.findIndex(p=>p.id===editing.id);state.products[i]=item}else state.products.push(item);
     markDirty();closeModal();renderApp();
   }
@@ -485,6 +543,7 @@ document.addEventListener('input',e=>{
   if(t.dataset.f){form[t.dataset.f]=t.value;persist()}
   else if(t.dataset.e){editing[t.dataset.e]=t.type==='checkbox'?t.checked:t.value}
   else if(t.dataset.s){state[t.dataset.s]=t.value;markDirty()}
+  else if(t.dataset.sec!==undefined){const i=+t.dataset.sec,v=t.value.trim(),old=state.sections[i];if(v&&v!==old){state.products.forEach(p=>{if(p.cat===old)p.cat=v});state.sections[i]=v;markDirty()}}
   else if(t.dataset.b){bulk[t.dataset.b]=t.value}
   else if(t.dataset.g){gh[t.dataset.g]=t.value.trim();try{localStorage.setItem('qd-gh',JSON.stringify(gh))}catch(e){}}
 });
