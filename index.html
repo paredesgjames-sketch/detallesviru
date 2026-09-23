@@ -186,6 +186,7 @@ input[type=color]{width:100%;height:46px;padding:3px;border:1px solid var(--line
 #heroPrev{pointer-events:none;margin-top:8px}
 #heroPrev .hero{margin:0;border-radius:18px}
 .hero.full{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;border-radius:0}
+.hero.xl .hin{padding-top:60px;padding-bottom:60px}
 #heroPrev .hero.full{width:100%;left:0;margin-left:0;margin-right:0;border-radius:18px}
 .posgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:150px;margin-top:6px}
 .posd{aspect-ratio:1;border:2px solid var(--line);border-radius:8px;background:var(--bg);padding:0;display:grid;place-items:center}
@@ -221,7 +222,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=18;
+const BUILD=19;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -721,7 +722,7 @@ function loadFonts(){
 const HERO_KEYS=['eyebrow','title','subtitle','titleFont','titleSize','subFont','subSize','heroOp','cta','note','heroPosX','heroPosY','heroFull'];
 function heroHtml(){
   const has=!!state.heroImg;
-  const H={s:190,m:270,l:360}[state.heroH||'m'];
+  const H=({s:'190px',m:'270px',l:'360px',xl:'calc(100vh - var(--hh,66px) - var(--ah,0px))'})[state.heroH||'m'];
   const op=Math.max(0,Math.min(95,state.heroOp==null||state.heroOp===''?45:Number(state.heroOp)))/100;
   const eb=state.eyebrow==null?'Catálogo':state.eyebrow;
   const ti=state.title||'Ramos de rosas para cada ocasión';
@@ -730,7 +731,7 @@ function heroHtml(){
   const ts=Math.max(22,Math.min(64,Number(state.titleSize)||40)),ss=Math.max(12,Math.min(30,Number(state.subSize)||16));
   const F=FONTS[state.titleFont]||FONTS.serif;
   const px=state.heroPosX==null?50:Number(state.heroPosX),py=state.heroPosY==null?50:Number(state.heroPosY);
-  return '<section class="hero'+(has?' has':'')+(state.heroFull?' full':'')+'" id="hero" style="min-height:'+H+'px;'+(has?'--hc:'+(state.heroColor||'#14213d')+';--ho:'+op+';--ht:'+(state.heroText||'#ffffff'):'')+'">'
+  return '<section class="hero'+(has?' has':'')+(state.heroFull?' full':'')+(state.heroH==='xl'?' xl':'')+'" id="hero" style="min-height:'+H+';'+(has?'--hc:'+(state.heroColor||'#14213d')+';--ho:'+op+';--ht:'+(state.heroText||'#ffffff'):'')+'">'
    +(has?'<img class="hbg" src="'+state.heroImg+'" alt="" style="object-position:'+px+'% '+py+'%"><div class="hov"></div>':'')
    +'<div class="hin">'+(eb?'<p class="eyebrow">'+esc(eb)+'</p>':'')
    +'<h1 style="font-family:'+F.f+';font-weight:'+F.w+';font-size:'+ts+'px">'+esc(ti)+'</h1>'
@@ -785,7 +786,8 @@ function openDesign(keep){
    <div class="posgrid">${[[0,0],[50,0],[100,0],[0,50],[50,50],[100,50],[0,100],[50,100],[100,100]].map(([x,y])=>{const on=(state.heroPosX==null?50:+state.heroPosX)===x&&(state.heroPosY==null?50:+state.heroPosY)===y;return `<button class="posd ${on?'on':''}" data-act="hpos" data-x="${x}" data-y="${y}" aria-label="Posición ${x},${y}"></button>`}).join('')}</div>
    <label class="chk2"><input type="checkbox" data-act="hfull" ${state.heroFull?'checked':''}> Imagen a pantalla completa (sin bordes ni márgenes)</label>
    <label style="margin-top:14px">Altura del banner</label>
-   <div class="seg" style="grid-template-columns:repeat(3,1fr)">${[['s','Baja'],['m','Media'],['l','Alta']].map(x=>`<button data-act="hh" data-v="${x[0]}" class="${(state.heroH||'m')===x[0]?'on':''}">${x[1]}</button>`).join('')}</div>
+   <div class="seg" style="grid-template-columns:repeat(4,1fr)">${[['s','Baja'],['m','Media'],['l','Alta'],['xl','Pantalla']].map(x=>`<button data-act="hh" data-v="${x[0]}" class="${(state.heroH||'m')===x[0]?'on':''}">${x[1]}</button>`).join('')}</div>
+   <p class="hint">"Pantalla" llena la altura visible de la computadora o el celular.</p>
    <label>Etiqueta superior</label><input type="text" data-s="eyebrow" value="${esc(state.eyebrow==null?'Catálogo':state.eyebrow)}" placeholder="Ej. 21 de septiembre">
    <label>Frase principal</label><input type="text" data-s="title" value="${esc(state.title||'Ramos de rosas para cada ocasión')}" placeholder="Ej. Flores amarillas">
    <div class="two"><div><label>Letra de la frase</label><select data-s="titleFont">${fo('titleFont')}</select></div><div><label>Tamaño: <b id="v_titleSize">${ts}px</b></label><input type="range" min="22" max="64" data-s="titleSize" value="${ts}"></div></div>
