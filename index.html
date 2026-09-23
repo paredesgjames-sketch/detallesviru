@@ -32,7 +32,9 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:10
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-#app{max-width:1080px;margin:0 auto;padding:0 16px 120px}
+#app{max-width:1400px;margin:0 auto;padding:0 20px 120px}
+@media(min-width:1700px){#app{max-width:1680px}}
+@media(min-width:2000px){#app{max-width:1900px}}
 
 /* Encabezado */
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin:0 -16px;padding:12px 16px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
@@ -48,11 +50,11 @@ button{cursor:pointer}
 .hero .note{display:inline-block;margin-top:14px;padding:7px 14px;border-radius:999px;background:var(--soft);color:var(--accent-text);font-size:13px;font-weight:500}
 
 /* Grilla */
-.grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
-.grid>.card{width:calc((100% - 14px)/2)}
-.grid>.empty{width:100%}
-@media(min-width:720px){.grid{gap:22px}.grid>.card{width:calc((100% - 44px)/3)}}
-@media(min-width:1000px){.grid>.card{width:calc((100% - 66px)/4)}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}
+.grid>.empty{grid-column:1/-1}
+@media(min-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:24px}}
+@media(min-width:1500px){.grid{grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative}
 .ph{display:block;width:100%;aspect-ratio:4/5;border:0;padding:0;background:var(--soft);position:relative;overflow:hidden}
 .ph img,.ph svg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
@@ -138,10 +140,11 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color
 .chips:empty{display:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;white-space:nowrap}
 .chips button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:8px 0 6px}
-.tile{position:relative;width:calc((100% - 12px)/2);aspect-ratio:1/1;border:0;padding:0;border-radius:18px;overflow:hidden;background:var(--soft);box-shadow:var(--shadow);text-align:left}
-@media(min-width:720px){.tile{width:calc((100% - 24px)/3);aspect-ratio:4/3}}
-@media(min-width:1000px){.tile{width:calc((100% - 36px)/4)}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin:8px 0 6px}
+.tile{position:relative;aspect-ratio:1/1;border:0;padding:0;border-radius:18px;overflow:hidden;background:var(--soft);box-shadow:var(--shadow);text-align:left}
+@media(min-width:600px){.tiles{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}.tile{aspect-ratio:4/3}}
+@media(min-width:1000px){.tiles{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:24px}}
+@media(min-width:1500px){.tiles{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}}
 .tph{position:absolute;inset:0}.tph img,.tph svg{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
 .tile:hover .tph img,.tile:hover .tph svg{transform:scale(1.05)}
 .tt{position:absolute;left:0;right:0;bottom:0;padding:34px 12px 12px;background:linear-gradient(transparent,rgba(20,8,12,.86));color:#fff;display:flex;flex-direction:column;gap:2px}
@@ -222,7 +225,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=19;
+const BUILD=20;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
