@@ -185,6 +185,15 @@ input[type=range]{width:100%;padding:0;accent-color:var(--accent);background:non
 input[type=color]{width:100%;height:46px;padding:3px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 #heroPrev{pointer-events:none;margin-top:8px}
 #heroPrev .hero{margin:0;border-radius:18px}
+.hero.full{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;border-radius:0}
+#heroPrev .hero.full{width:100%;left:0;margin-left:0;margin-right:0;border-radius:18px}
+.posgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:150px;margin-top:6px}
+.posd{aspect-ratio:1;border:2px solid var(--line);border-radius:8px;background:var(--bg);padding:0;display:grid;place-items:center}
+.posd::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.posd.on{border-color:var(--accent)}
+.posd.on::after{background:var(--accent)}
+.chk2{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-top:14px}
+.chk2 input{width:18px;height:18px;accent-color:var(--accent)}
 .sharecard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin-top:8px}
 .sc-img{aspect-ratio:1200/630;background:var(--soft);display:grid;place-items:center;color:var(--muted);font-size:13px;overflow:hidden}
 .sc-img img{width:100%;height:100%;object-fit:cover;display:block}
@@ -212,7 +221,7 @@ select{width:100%;border:1px solid var(--line);background:var(--bg);border-radiu
 const DATA = JSON.parse(document.getElementById('catalog-data').textContent);
 let state = DATA;
 let cart = {}, form = {name:'',mode:'recojo',addr:'',date:'',time:'',msg:''};
-const BUILD=17;
+const BUILD=18;
 let query='',sortBy='';
 let admin = false, canAdmin = false, dirty = false, editing = null, view = {kind:null,id:null};
 
@@ -709,7 +718,7 @@ function loadFonts(){
   if(!l){l=document.createElement('link');l.id='gfx';l.rel='stylesheet';document.head.appendChild(l)}
   if(l.getAttribute('href')!==href)l.setAttribute('href',href);
 }
-const HERO_KEYS=['eyebrow','title','subtitle','titleFont','titleSize','subFont','subSize','heroOp','cta','note'];
+const HERO_KEYS=['eyebrow','title','subtitle','titleFont','titleSize','subFont','subSize','heroOp','cta','note','heroPosX','heroPosY','heroFull'];
 function heroHtml(){
   const has=!!state.heroImg;
   const H={s:190,m:270,l:360}[state.heroH||'m'];
@@ -720,8 +729,9 @@ function heroHtml(){
   const cta=state.cta==null?'Ver ramos':state.cta;
   const ts=Math.max(22,Math.min(64,Number(state.titleSize)||40)),ss=Math.max(12,Math.min(30,Number(state.subSize)||16));
   const F=FONTS[state.titleFont]||FONTS.serif;
-  return '<section class="hero'+(has?' has':'')+'" id="hero" style="min-height:'+H+'px;'+(has?'--hc:'+(state.heroColor||'#14213d')+';--ho:'+op+';--ht:'+(state.heroText||'#ffffff'):'')+'">'
-   +(has?'<img class="hbg" src="'+state.heroImg+'" alt=""><div class="hov"></div>':'')
+  const px=state.heroPosX==null?50:Number(state.heroPosX),py=state.heroPosY==null?50:Number(state.heroPosY);
+  return '<section class="hero'+(has?' has':'')+(state.heroFull?' full':'')+'" id="hero" style="min-height:'+H+'px;'+(has?'--hc:'+(state.heroColor||'#14213d')+';--ho:'+op+';--ht:'+(state.heroText||'#ffffff'):'')+'">'
+   +(has?'<img class="hbg" src="'+state.heroImg+'" alt="" style="object-position:'+px+'% '+py+'%"><div class="hov"></div>':'')
    +'<div class="hin">'+(eb?'<p class="eyebrow">'+esc(eb)+'</p>':'')
    +'<h1 style="font-family:'+F.f+';font-weight:'+F.w+';font-size:'+ts+'px">'+esc(ti)+'</h1>'
    +(su?'<p class="hsub" style="font-family:'+fontCss(state.subFont||'sans')+';font-size:'+ss+'px">'+esc(su)+'</p>':'')
@@ -771,7 +781,10 @@ function openDesign(keep){
    <label>Color de la capa sobre la imagen</label>
    <div class="themes">${HC.map(c=>`<button class="dot ${(state.heroColor||'#14213d')===c?'on':''}" data-act="hcol" data-v="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}<label class="sw"><i style="background:${WHEEL}"></i>Otro<input class="ov" type="color" data-th="hcolor" value="${esc(state.heroColor||'#14213d')}"></label></div>
    <label>Opacidad de la capa: <b id="v_heroOp">${hop}%</b></label><input type="range" min="0" max="90" step="5" data-s="heroOp" value="${hop}">
-   <label>Altura del banner</label>
+   <label>Posición de la imagen</label>
+   <div class="posgrid">${[[0,0],[50,0],[100,0],[0,50],[50,50],[100,50],[0,100],[50,100],[100,100]].map(([x,y])=>{const on=(state.heroPosX==null?50:+state.heroPosX)===x&&(state.heroPosY==null?50:+state.heroPosY)===y;return `<button class="posd ${on?'on':''}" data-act="hpos" data-x="${x}" data-y="${y}" aria-label="Posición ${x},${y}"></button>`}).join('')}</div>
+   <label class="chk2"><input type="checkbox" data-act="hfull" ${state.heroFull?'checked':''}> Imagen a pantalla completa (sin bordes ni márgenes)</label>
+   <label style="margin-top:14px">Altura del banner</label>
    <div class="seg" style="grid-template-columns:repeat(3,1fr)">${[['s','Baja'],['m','Media'],['l','Alta']].map(x=>`<button data-act="hh" data-v="${x[0]}" class="${(state.heroH||'m')===x[0]?'on':''}">${x[1]}</button>`).join('')}</div>
    <label>Etiqueta superior</label><input type="text" data-s="eyebrow" value="${esc(state.eyebrow==null?'Catálogo':state.eyebrow)}" placeholder="Ej. 21 de septiembre">
    <label>Frase principal</label><input type="text" data-s="title" value="${esc(state.title||'Ramos de rosas para cada ocasión')}" placeholder="Ej. Flores amarillas">
@@ -869,6 +882,8 @@ document.addEventListener('click',e=>{
   else if(a==='hcol'){state.heroColor=el.dataset.v;markDirty();heroChanged();document.querySelectorAll('.dot').forEach(x=>x.classList.toggle('on',x===el))}
   else if(a==='hh'){state.heroH=el.dataset.v;markDirty();heroChanged();document.querySelectorAll('[data-act="hh"]').forEach(x=>x.classList.toggle('on',x===el))}
   else if(a==='rmshare'){state.shareImg='';markDirty();openDesign(true)}
+  else if(a==='hpos'){state.heroPosX=+el.dataset.x;state.heroPosY=+el.dataset.y;markDirty();heroChanged();document.querySelectorAll('.posd').forEach(x=>x.classList.toggle('on',x===el))}
+  else if(a==='hfull'){state.heroFull=el.checked;markDirty();heroChanged()}
   else if(a==='rmhero'){state.heroImg='';markDirty();heroChanged();openDesign(true)}
   else if(a==='gomain'){const g=document.querySelector('.tools')||$('#chips')||$('#main');if(g)g.scrollIntoView({behavior:'smooth',block:'start'})}
   else if(a==='theme'){state.theme=el.dataset.v;applyTheme();markDirty();document.querySelectorAll('#themeSw .sw').forEach(x=>x.classList.toggle('on',x===el))}
@@ -952,7 +967,7 @@ renderApp();
 {const dm=/^#p=(.+)$/.exec(location.hash);if(dm){const pid=decodeURIComponent(dm[1]);if(byId(pid))openDetail(pid)}}
 if(location.hash==='#admin'){
   canAdmin=true;admin=true;
-  try{const d=JSON.parse(localStorage.getItem('qd-draft')||'null');if(d&&d.products){['theme','themeColor','eyebrow','title','subtitle','delivery','logo','logoFit','mode','pageBg','heroImg','heroColor','heroOp','heroH','heroText','titleFont','titleSize','subFont','subSize','cta','shareImg','shareTitle','shareDesc','shareV','shareUpV'].forEach(k=>{if(!(k in d)&&(k in DATA))d[k]=DATA[k]});state=d;dirty=true;applyTheme();}}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem('qd-draft')||'null');if(d&&d.products){['theme','themeColor','eyebrow','title','subtitle','delivery','logo','logoFit','mode','pageBg','heroImg','heroColor','heroOp','heroH','heroText','titleFont','titleSize','subFont','subSize','cta','shareImg','shareTitle','shareDesc','shareV','shareUpV','heroPosX','heroPosY','heroFull'].forEach(k=>{if(!(k in d)&&(k in DATA))d[k]=DATA[k]});state=d;dirty=true;applyTheme();}}catch(e){}
   renderApp();
 }
 })();
